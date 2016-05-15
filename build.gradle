@@ -5,6 +5,7 @@ apply plugin: 'application'
 def defaultEncoding = 'UTF-8'
 group 'RxSample'
 version '1.0-SNAPSHOT'
+defaultTasks 'run'
 
 [compileJava, compileTestJava]*.options*.encoding = defaultEncoding
 
