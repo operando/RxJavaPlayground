@@ -57,5 +57,11 @@ public class Main {
 
         Observable.merge(Observable.just(100), Observable.range(0, 3), Observable.just(200))
                 .subscribe(PrintObserver.create());
+
+        Observable.range(0, 10)
+                .skip(5)
+                .take(2)
+//                .limit(2) take(count)を内部で読んでるだけなので同じ
+                .subscribe(PrintObserver.create());
     }
 }
