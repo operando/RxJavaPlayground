@@ -40,13 +40,29 @@ public class Main {
                 .defer(() -> Observable.range(2, 3))
                 .subscribe(PrintObserver.create());
 
-        Observable.range(0, 3)
+        Observable
+                .create(new Observable.OnSubscribe<Integer>() {
+                    @Override
+                    public void call(Subscriber<? super Integer> subscriber) {
+                        System.out.println("integer call");
+                        subscriber.onNext(1);
+                        subscriber.onNext(2);
+                        subscriber.onCompleted();
+                    }
+                })
+                .doOnNext(new Action1<Integer>() {
+                    @Override
+                    public void call(Integer integer) {
+                        System.out.println("doOnNext : " + integer);
+                    }
+                })
                 .flatMap(new Func1<Integer, Observable<?>>() { // return merge(map(func));
                     @Override
                     public Observable<?> call(Integer integer) {
                         return Observable.create(new Observable.OnSubscribe<String>() {
                             @Override
                             public void call(Subscriber<? super String> subscriber) {
+                                System.out.println("string flatMap call");
                                 subscriber.onNext("toString : " + integer.toString());
                                 subscriber.onCompleted();
                             }
@@ -63,5 +79,16 @@ public class Main {
                 .take(2)
 //                .limit(2) take(count)を内部で読んでるだけなので同じ
                 .subscribe(PrintObserver.create());
+
+        Observable.range(0, 5)
+                .doOnNext(new Action1<Integer>() {
+                    @Override
+                    public void call(Integer integer) {
+                        // 0 - 4の値は来る
+                        System.out.println(integer);
+                    }
+                })
+                .skip(2)
+                .subscribe(PrintObserver.create());  // 2 - 4の値が来る
     }
 }
