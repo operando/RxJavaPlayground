@@ -6,9 +6,10 @@ import rx.Subscriber;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
+import rx.subjects.PublishSubject;
 
-import java.net.SocketException;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.IntStream;
 
 public class Main {
 
@@ -93,64 +94,102 @@ public class Main {
                 .skip(2)
                 .subscribe(PrintObserver.create());  // 2 - 4の値が来る
 
-        Observable
-                .create((Observable.OnSubscribe<String>) subscriber -> {
-                    subscriber.onNext("test");
-                    subscriber.onError(new Exception());
+        Observable<Integer> integerObservable = Observable
+                .create(new Observable.OnSubscribe<Integer>() {
+                    @Override
+                    public void call(Subscriber<? super Integer> subscriber) {
+                        IntStream.range(0, 5).forEach(v -> {
+                            System.out.println(v);
+                            subscriber.onNext(v);
+                        });
+                        System.out.println("Completed");
+                        subscriber.onCompleted();
+                    }
                 })
-                .onErrorReturn(throwable -> "error")
-                .subscribe(PrintObserver.create());
+                .cache();
+        integerObservable.subscribe(PrintObserver.create());
+        integerObservable.subscribe(PrintObserver.create());
+
+        Observable<Integer> integerObservable1 = Observable.range(0, 10);
+        Observable<Integer> integerObservable2 = Observable.range(10, 10);
 
         Observable
-                .create((Observable.OnSubscribe<Integer>) subscriber -> {
-                    subscriber.onError(new Exception());
-                })
-                .onErrorResumeNext(new Func1<Throwable, Observable<? extends Integer>>() {
+                .combineLatest(integerObservable1, integerObservable2, new Func2<Integer, Integer, String>() {
                     @Override
-                    public Observable<? extends Integer> call(Throwable throwable) {
-                        return Observable.just(-1);
+                    public String call(Integer integer, Integer integer2) {
+                        System.out.println(integer);
+                        System.out.println(integer2);
+                        return Integer.toString(integer + integer2);
                     }
                 })
                 .subscribe(PrintObserver.create());
 
-        Observable
-                .create((Observable.OnSubscribe<String>) subscriber -> {
-                    System.out.println("Retry Test");
-                    subscriber.onNext("test");
-                    subscriber.onError(new Exception());
-                })
-                .retry(2)
-                .onErrorReturn(throwable -> "error")
-//                .retry(2) // こっちに書くと効果はない
+        Observable<String> stringObservable = Observable.create(new Observable.OnSubscribe<String>() {
+            @Override
+            public void call(Subscriber<? super String> subscriber) {
+                subscriber.onNext("test");
+            }
+        });
+
+        Observable.merge(stringObservable.doOnNext(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        System.out.println("doOnNext 1");
+                    }
+                }),
+
+                stringObservable.doOnNext(new Action1<String>() {
+                    @Override
+                    public void call(String s) {
+                        System.out.println("doOnNext 2");
+                    }
+                }))
                 .subscribe(PrintObserver.create());
+
+        PublishSubject<String> stringPublishSubject = PublishSubject.create();
+        Observable<String> stringObservable1 = stringPublishSubject.asObservable();
+        stringObservable1
+                .flatMap(new Func1<String, Observable<String>>() {
+                    @Override
+                    public Observable<String> call(String s) {
+                        return Observable.just(s)
+                                .onErrorResumeNext(throwable -> Observable.empty());
+//                                .onErrorReturn(throwable -> "catch error");
+                    }
+                })
+                .subscribe(PrintObserver.create());
+
+        stringPublishSubject.onNext("test");
+        stringPublishSubject.onError(new Exception());
+//        stringPublishSubject.onCompleted();
+        stringPublishSubject.onNext("test");// 無効.onCompleted or onErrorを読んだ後なので、onNextは呼ばれない
+
 
         Observable
                 .create(new Observable.OnSubscribe<String>() {
-                    int count;
-
                     @Override
                     public void call(Subscriber<? super String> subscriber) {
-                        System.out.println(count);
-//                        if (count > 2) {
-                        if (count > 1) {
-                            subscriber.onError(new SocketException());
-                        } else {
-                            subscriber.onError(new Exception());
-                        }
-                        count++;
+                        subscriber.onNext("test");
+                        subscriber.onNext("test");// onNextがちゃんと呼ばれる
                     }
                 })
-                .retry(new Func2<Integer, Throwable, Boolean>() {
+                .flatMap(new Func1<String, Observable<?>>() {
                     @Override
-                    public Boolean call(Integer count, Throwable throwable) {
-                        // SocketExceptionが起きたらError
-                        if (throwable instanceof SocketException) {
-                            return false;
-                        }
-                        // ２回まではリトライする
-                        return count < 3;
+                    public Observable<?> call(String s) {
+                        return Observable
+                                .create(new Observable.OnSubscribe<String>() {
+                                    @Override
+                                    public void call(Subscriber<? super String> subscriber) {
+                                        subscriber.onNext(s);
+                                        subscriber.onError(new Exception());
+                                    }
+                                })
+                                // 上のObservableのonErrorやCompleteが発火すると困るのでエラーハンドリングして呼ばれないようにする
+                                .onErrorReturn(throwable -> "catch error");
+//                                .onErrorResumeNext(throwable -> Observable.empty());
                     }
                 })
                 .subscribe(PrintObserver.create());
+
     }
 }
