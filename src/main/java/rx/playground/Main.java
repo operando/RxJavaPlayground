@@ -1,6 +1,8 @@
 package rx.playground;
 
-import rx.*;
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
 import rx.functions.Action1;
 import rx.functions.Func1;
 import rx.functions.Func2;
@@ -190,5 +192,6 @@ public class Main {
                 .subscribe(PrintObserver.create());
 
         SingleSample.run();
+        SubjectSample.run();
     }
 }

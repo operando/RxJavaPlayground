@@ -17,6 +17,10 @@
 
 * [rx.Singleについて](http://qiita.com/izumin5210/items/24449aee848b5ddbcf6d)
 
+### Subject
+
+* [Rxで知っておくと便利なSubjectたち](http://qiita.com/hide92795/items/f7205c8171826cc2153b)
+
 ## その他
 
 どうやってObservable化するか
