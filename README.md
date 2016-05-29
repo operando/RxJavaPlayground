@@ -11,6 +11,11 @@
 ### エラーハンドリング
 
 * [RxJavaのエラーハンドリング](http://qiita.com/boohbah/items/108b378c5cb593c666e6)
+* [ReactiveX - Single ](http://reactivex.io/documentation/single.html)
+
+### Single
+
+* [rx.Singleについて](http://qiita.com/izumin5210/items/24449aee848b5ddbcf6d)
 
 ## その他
 
