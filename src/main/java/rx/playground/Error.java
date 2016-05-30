@@ -13,6 +13,9 @@ import java.net.SocketException;
 public class Error {
 
     public static void run() {
+        System.out.println("============Error============");
+
+
         Observable
                 .create((Observable.OnSubscribe<String>) subscriber -> {
                     subscriber.onNext("test");
@@ -72,5 +75,34 @@ public class Error {
                     }
                 })
                 .subscribe(PrintObserver.create());
+
+        Observable
+                .create(new Observable.OnSubscribe<String>() {
+                    @Override
+                    public void call(Subscriber<? super String> subscriber) {
+                        subscriber.onNext("test");
+                        subscriber.onError(new SocketException("exception"));
+                    }
+                })
+                .onErrorResumeNext(new Func1<Throwable, Observable<? extends String>>() {
+                    @Override
+                    public Observable<? extends String> call(Throwable throwable) {
+                        return Observable.create(new Observable.OnSubscribe<String>() {
+                            @Override
+                            public void call(Subscriber<? super String> subscriber) {
+                                // なんか特定の条件だったらonNext.そうでないならそのままexceptionを流す
+                                if (throwable instanceof SocketException) {
+                                    subscriber.onNext("onErrorResumeNext");
+                                    subscriber.onCompleted();
+                                    return;
+                                }
+                                subscriber.onError(throwable);
+                            }
+                        });
+                    }
+                })
+                .subscribe(PrintObserver.create());
+
+        System.out.println("============Error============");
     }
 }
