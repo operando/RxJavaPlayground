@@ -87,18 +87,11 @@ public class Error {
                 .onErrorResumeNext(new Func1<Throwable, Observable<? extends String>>() {
                     @Override
                     public Observable<? extends String> call(Throwable throwable) {
-                        return Observable.create(new Observable.OnSubscribe<String>() {
-                            @Override
-                            public void call(Subscriber<? super String> subscriber) {
-                                // なんか特定の条件だったらonNext.そうでないならそのままexceptionを流す
-                                if (throwable instanceof SocketException) {
-                                    subscriber.onNext("onErrorResumeNext");
-                                    subscriber.onCompleted();
-                                    return;
-                                }
-                                subscriber.onError(throwable);
-                            }
-                        });
+                        // なんか特定の条件だったら値を流す.そうでないならそのままexceptionを流す
+                        if (throwable instanceof SocketException) {
+                            return Observable.just("onErrorResumeNext");
+                        }
+                        return Observable.error(throwable);
                     }
                 })
                 .subscribe(PrintObserver.create());
