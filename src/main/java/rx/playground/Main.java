@@ -3,11 +3,11 @@ package rx.playground;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
-import rx.functions.Action1;
-import rx.functions.Func1;
-import rx.functions.Func2;
+import rx.functions.*;
 import rx.subjects.PublishSubject;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.IntStream;
 
@@ -193,5 +193,17 @@ public class Main {
 
         SingleSample.run();
         SubjectSample.run();
+
+        Observable.range(0, 3)
+                .repeat(2)
+                .subscribe(PrintObserver.create());
+
+        Observable.range(0, 3)
+                .collect(() -> new ArrayList<>(), (Action2<List<Integer>, Integer>) (integers, integer) -> integers.add(integer))
+                .subscribe(PrintObserver.create());
+
+        Observable.range(0, 8)
+                .buffer(4)
+                .subscribe(PrintObserver.create());
     }
 }
