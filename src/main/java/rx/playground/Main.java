@@ -3,7 +3,11 @@ package rx.playground;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
-import rx.functions.*;
+import rx.functions.Action1;
+import rx.functions.Action2;
+import rx.functions.Func1;
+import rx.functions.Func2;
+import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 import java.util.ArrayList;
@@ -202,8 +206,35 @@ public class Main {
                 .collect(() -> new ArrayList<>(), (Action2<List<Integer>, Integer>) (integers, integer) -> integers.add(integer))
                 .subscribe(PrintObserver.create());
 
+        Observable.merge(
+                Observable.just(1).flatMap(new Func1<Integer, Observable<Integer>>() {
+                    @Override
+                    public Observable<Integer> call(Integer integer) {
+                        return Observable.just(integer).subscribeOn(Schedulers.newThread());
+                    }
+                }),
+                Observable.just(2).subscribeOn(Schedulers.newThread()))
+                .collect(() -> new ArrayList<>(), (Action2<List<Integer>, Integer>) (integers, integer) -> {
+                            System.out.println("Thread : " + Thread.currentThread().getName());
+                            System.out.println("integer : " + integer);
+                            integers.add(integer);
+                        }
+                )
+                .flatMap((Func1<List<Integer>, Observable<Integer>>) integers -> Observable.just(integers.get(1)))
+                .subscribe(PrintObserver.create());
+
         Observable.range(0, 8)
                 .buffer(4)
+                .subscribe(PrintObserver.create());
+
+        Observable.range(0, 10)
+                .flatMap(new Func1<Integer, Observable<Integer>>() {
+                    @Override
+                    public Observable<Integer> call(Integer integer) {
+                        System.out.println("integer : " + integer);
+                        return Observable.just(integer);
+                    }
+                })
                 .subscribe(PrintObserver.create());
     }
 }
