@@ -3,10 +3,7 @@ package rx.playground;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
-import rx.functions.Action1;
-import rx.functions.Action2;
-import rx.functions.Func1;
-import rx.functions.Func2;
+import rx.functions.*;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
@@ -17,7 +14,7 @@ import java.util.stream.IntStream;
 
 public class Main {
 
-    public static void main(String[] s) {
+    public static void main(String[] s) throws InterruptedException {
 
         Observer<String> stringObserver = PrintObserver.create();
         Observable.just("hogehoge", "mogemoge")
@@ -197,6 +194,7 @@ public class Main {
 
         SingleSample.run();
         SubjectSample.run();
+        SubscribeOnTraining.run();
 
         Observable.range(0, 3)
                 .repeat(2)
@@ -223,6 +221,7 @@ public class Main {
                 .flatMap((Func1<List<Integer>, Observable<Integer>>) integers -> Observable.just(integers.get(1)))
                 .subscribe(PrintObserver.create());
 
+
         Observable.range(0, 8)
                 .buffer(4)
                 .subscribe(PrintObserver.create());
@@ -236,5 +235,7 @@ public class Main {
                     }
                 })
                 .subscribe(PrintObserver.create());
+
+        Thread.sleep(1000);
     }
 }
