@@ -236,6 +236,20 @@ public class Main {
                 })
                 .subscribe(PrintObserver.create());
 
+        Observable
+                .create(new Observable.OnSubscribe<String>() {
+                    @Override
+                    public void call(Subscriber<? super String> subscriber) {
+//                        subscriber.onNext("");
+//                        subscriber.onCompleted();
+                        subscriber.onError(new Exception());
+                    }
+                })
+                .doOnTerminate(() -> System.out.println("doOnTerminate"))
+                .subscribe(s1 -> {
+                }, throwable -> {
+                });
+
         Thread.sleep(1000);
     }
 }
