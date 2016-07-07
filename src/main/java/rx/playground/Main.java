@@ -260,6 +260,7 @@ public class Main {
         stringVariable.set("hogehoge");
         subscription.unsubscribe();
         stringVariable.asObservable().subscribe(PrintObserver.create());
+        System.out.println(stringVariable.get());
 
         Thread.sleep(1000);
     }

@@ -18,7 +18,8 @@ public class Variable<T> {
     }
 
     public void set(T value) {
-        serializedSubject.onNext(value);
+        this.value = value;
+        serializedSubject.onNext(this.value);
     }
 
     public Observable<T> asObservable() {
