@@ -3,7 +3,11 @@ package rx.playground;
 import rx.Observable;
 import rx.Observer;
 import rx.Subscriber;
-import rx.functions.*;
+import rx.Subscription;
+import rx.functions.Action1;
+import rx.functions.Action2;
+import rx.functions.Func1;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
@@ -249,6 +253,13 @@ public class Main {
                 .subscribe(s1 -> {
                 }, throwable -> {
                 });
+
+        Variable<String> stringVariable = new Variable<>("test");
+
+        Subscription subscription = stringVariable.asObservable().subscribe(PrintObserver.create());
+        stringVariable.set("hogehoge");
+        subscription.unsubscribe();
+        stringVariable.asObservable().subscribe(PrintObserver.create());
 
         Thread.sleep(1000);
     }
