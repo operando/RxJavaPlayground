@@ -1,6 +1,8 @@
 package rx.playground;
 
 import rx.Observable;
+import rx.Single;
+import rx.SingleSubscriber;
 import rx.Subscriber;
 import rx.functions.Func1;
 import rx.functions.Func2;
@@ -15,12 +17,20 @@ public class Error {
     public static void run() {
         System.out.println("============Error============");
 
+        Observable
+                .create((Observable.OnSubscribe<String>) subscriber -> {
+                    subscriber.onNext("test");
+                    subscriber.onError(new Exception());
+                })
+                .onErrorReturn(throwable -> "error")
+                .subscribe(PrintObserver.create());
 
         Observable
                 .create((Observable.OnSubscribe<String>) subscriber -> {
                     subscriber.onNext("test");
                     subscriber.onError(new Exception());
                 })
+                .map(String::toUpperCase)
                 .onErrorReturn(throwable -> "error")
                 .subscribe(PrintObserver.create());
 
@@ -46,6 +56,42 @@ public class Error {
                 .onErrorReturn(throwable -> "error")
 //                .retry(2) // こっちに書くと効果はない
                 .subscribe(PrintObserver.create());
+
+        Observable
+                .create(new Observable.OnSubscribe<String>() {
+                    @Override
+                    public void call(Subscriber<? super String> subscriber) {
+                        subscriber.onError(new Exception());
+                    }
+                })
+                .retry((integer, throwable) -> {
+                    System.out.println("retry count : " + integer);
+                    return integer < 3;
+                })
+                .subscribe(PrintObserver.create());
+
+        Single
+                .create(new Single.OnSubscribe<String>() {
+                    @Override
+                    public void call(SingleSubscriber<? super String> singleSubscriber) {
+                        singleSubscriber.onError(new Exception());
+                    }
+                })
+                .retry((integer, throwable) -> {
+                    System.out.println("single retry count : " + integer);
+                    return integer < 3;
+                })
+                .subscribe(new SingleSubscriber<String>() {
+                    @Override
+                    public void onSuccess(String value) {
+                        System.out.println("single value : " + value);
+                    }
+
+                    @Override
+                    public void onError(Throwable error) {
+                        System.out.println("single error : " + error);
+                    }
+                });
 
         Observable
                 .create(new Observable.OnSubscribe<String>() {
