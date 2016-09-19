@@ -11,6 +11,7 @@ import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
+import java.lang.instrument.IllegalClassFormatException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -196,9 +197,11 @@ public class Main {
                 })
                 .subscribe(PrintObserver.create());
 
+        Error.run();
         SingleSample.run();
         SubjectSample.run();
         SubscribeOnTraining.run();
+        Repeat.run();
 
         Observable.range(0, 3)
                 .repeat(2)
