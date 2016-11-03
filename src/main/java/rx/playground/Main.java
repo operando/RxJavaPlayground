@@ -1,13 +1,20 @@
 package rx.playground;
 
-import rx.*;
-import rx.functions.*;
+import rx.Observable;
+import rx.Observer;
+import rx.Subscriber;
+import rx.Subscription;
+import rx.functions.Action1;
+import rx.functions.Action2;
+import rx.functions.Func1;
+import rx.functions.Func2;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class Main {
@@ -253,7 +260,7 @@ public class Main {
         Thread.sleep(1000);
 
         Observable<Integer> a = Observable.range(0, 1);
-        Observable<Integer> b = Observable.range(0, 1);
+        Observable<Integer> b = Observable.range(1, 1);
 
         Observable<Integer> o1 = Observable.just(1, 3, 5);
         Observable<Integer> o2 = Observable.just(2, 4, 6);
@@ -262,25 +269,52 @@ public class Main {
                 .zip(o1, o2, (d1, d2) -> d1 + " + " + d2 + " = " + (d1 + d2))
                 .subscribe(System.out::println);
 
-        Observable
-                .combineLatest(a, b, new Func2<Integer, Integer, Observable<String>>() {
+        Observable<Integer> integerObservable3 = Observable
+                .create(new Observable.OnSubscribe<Integer>() {
                     @Override
-                    public Observable<String> call(Integer integer, Integer integer2) {
-                        System.out.println("" + integer + integer2);
-                        return Observable.zip(Observable.just(integer, integer2), Observable.range(0, 2), new Func2<Integer, Integer, String>() {
-                            @Override
-                            public String call(Integer integer, Integer integer2) {
-                                System.out.println("zip : " + integer + integer2);
-                                return "" + integer + integer2;
-                            }
-                        });
+                    public void call(Subscriber<? super Integer> subscriber) {
+                        System.out.println("integerObservable3");
+                        subscriber.onNext(1);
+                        subscriber.onCompleted();
                     }
                 })
-//                .toList()
-//                .map(observables -> {
-//                    return Observable.concat(observables)
-//                            .doOnNext(s1 -> System.out.println(s1));
-//                })
+                .delay(2, TimeUnit.SECONDS);
+
+        Observable<Integer> integerObservable4 = Observable
+                .create(new Observable.OnSubscribe<Integer>() {
+                    @Override
+                    public void call(Subscriber<? super Integer> subscriber) {
+                        System.out.println("integerObservable4");
+                        subscriber.onNext(2);
+                        subscriber.onCompleted();
+                    }
+                })
+                .delay(100, TimeUnit.MILLISECONDS);
+
+        Observable
+                .combineLatest(integerObservable3.subscribeOn(Schedulers.newThread()), integerObservable4.subscribeOn(Schedulers.newThread()), new Func2<Integer, Integer, List<Integer>>() {
+                    @Override
+                    public List<Integer> call(Integer integer, Integer integer2) {
+                        System.out.println("" + integer + integer2);
+                        List<Integer> integers = new ArrayList<Integer>();
+                        integers.add(integer);
+                        integers.add(integer2);
+                        return integers;
+                    }
+                })
+                .map(integers -> {
+                    return integers
+                            .stream()
+                            .map(integer -> {
+                                return get(integer);
+                            })
+                            .collect(Collectors.toList());
+                })
+                .flatMap(observables -> {
+                    return Observable.concat(observables)
+                            .doOnNext(s1 -> System.out.println(s1));
+                })
+                .subscribeOn(Schedulers.newThread())
                 .subscribe(PrintObserver.create("combineLatest"));
 
 //        List<Observable<String>> aaaa = Observable
@@ -298,18 +332,13 @@ public class Main {
             return integer % 2 != 0;
         });
 
-        List<Observable<Integer>> observables = aa.to(new Func1<Observable<Integer>, List<Observable<Integer>>>() {
-            @Override
-            public List<Observable<Integer>> call(Observable<Integer> integerObservable) {
-                List<Observable<Integer>> observableLIst = new ArrayList<Observable<Integer>>();
-                observableLIst.add(integerObservable);
-                return observableLIst;
-            }
-        });
-
         Observable.merge(aa, aaa)
-                .subscribe(PrintObserver.create());
+                .subscribe(PrintObserver.create("merge"));
 
-        Thread.sleep(1000);
+        Thread.sleep(3000);
+    }
+
+    public static Observable<Integer> get(Integer integer) {
+        return Observable.just(integer);
     }
 }

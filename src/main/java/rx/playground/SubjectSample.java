@@ -1,5 +1,7 @@
 package rx.playground;
 
+import rx.Observable;
+import rx.Subscription;
 import rx.subjects.AsyncSubject;
 import rx.subjects.BehaviorSubject;
 import rx.subjects.PublishSubject;
@@ -42,6 +44,7 @@ public class SubjectSample {
         stringPublishSubject.onNext("test2");
         stringPublishSubject.onNext("test3");
         stringPublishSubject.onCompleted();
+        stringPublishSubject.onNext("test3");
 
 
         ReplaySubject<String> stringReplaySubject = ReplaySubject.create();
@@ -53,6 +56,46 @@ public class SubjectSample {
         stringReplaySubject.onCompleted();
         stringReplaySubject.subscribe(PrintObserver.create());
 
+        PublishSubject<Void> voidPublishSubject = PublishSubject.create();
+        Subscription subscription;
+
+        boolean isOverM = true;
+        if (isOverM) {
+            subscription = voidPublishSubject
+                    .flatMap(value -> {
+                        return getBitmapFromUrl();
+                    })
+                    .subscribe(
+                            s -> {
+                                a();
+                            },
+                            throwable -> {
+                                b();
+                            });
+        } else {
+            subscription = voidPublishSubject
+                    .subscribe(
+                            s -> {
+                                c();
+                            });
+        }
+
         System.out.println("============Subject============");
+    }
+
+    private static Observable<String> getBitmapFromUrl() {
+        return Observable.just("");
+    }
+
+    private static void a() {
+
+    }
+
+    private static void b() {
+
+    }
+
+    private static void c() {
+
     }
 }
