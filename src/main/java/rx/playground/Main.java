@@ -1,17 +1,10 @@
 package rx.playground;
 
-import rx.Observable;
-import rx.Observer;
-import rx.Subscriber;
-import rx.Subscription;
-import rx.functions.Action1;
-import rx.functions.Action2;
-import rx.functions.Func1;
-import rx.functions.Func2;
+import rx.*;
+import rx.functions.*;
 import rx.schedulers.Schedulers;
 import rx.subjects.PublishSubject;
 
-import java.lang.instrument.IllegalClassFormatException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -24,15 +17,6 @@ public class Main {
         Observer<String> stringObserver = PrintObserver.create();
         Observable.just("hogehoge", "mogemoge")
                 .subscribe(stringObserver);
-
-        Observable.just("test")
-                .doOnNext(new Action1<String>() {
-                    @Override
-                    public void call(String s) {
-                        System.out.println(s);
-                    }
-                })
-                .subscribe();
 
         Observable.range(0, 4)
                 .take(2) // 0,1 が2回
@@ -202,6 +186,7 @@ public class Main {
         SubjectSample.run();
         SubscribeOnTraining.run();
         Repeat.run();
+        Do.run();
 
         Observable.range(0, 3)
                 .repeat(2)
@@ -264,6 +249,66 @@ public class Main {
         subscription.unsubscribe();
         stringVariable.asObservable().subscribe(PrintObserver.create());
         System.out.println(stringVariable.get());
+
+        Thread.sleep(1000);
+
+        Observable<Integer> a = Observable.range(0, 1);
+        Observable<Integer> b = Observable.range(0, 1);
+
+        Observable<Integer> o1 = Observable.just(1, 3, 5);
+        Observable<Integer> o2 = Observable.just(2, 4, 6);
+
+        Observable
+                .zip(o1, o2, (d1, d2) -> d1 + " + " + d2 + " = " + (d1 + d2))
+                .subscribe(System.out::println);
+
+        Observable
+                .combineLatest(a, b, new Func2<Integer, Integer, Observable<String>>() {
+                    @Override
+                    public Observable<String> call(Integer integer, Integer integer2) {
+                        System.out.println("" + integer + integer2);
+                        return Observable.zip(Observable.just(integer, integer2), Observable.range(0, 2), new Func2<Integer, Integer, String>() {
+                            @Override
+                            public String call(Integer integer, Integer integer2) {
+                                System.out.println("zip : " + integer + integer2);
+                                return "" + integer + integer2;
+                            }
+                        });
+                    }
+                })
+//                .toList()
+//                .map(observables -> {
+//                    return Observable.concat(observables)
+//                            .doOnNext(s1 -> System.out.println(s1));
+//                })
+                .subscribe(PrintObserver.create("combineLatest"));
+
+//        List<Observable<String>> aaaa = Observable
+//                .zip(a, b, (integer, integer2) -> {
+//                    return "" + integer + integer2;
+//                }).toList().toBlocking()
+
+        Observable<Integer> aa = a.filter(integer -> {
+            System.out.println("aa : " + integer);
+            return integer % 2 == 0;
+        });
+
+        Observable<Integer> aaa = a.filter(integer -> {
+            System.out.println("aaa : " + integer);
+            return integer % 2 != 0;
+        });
+
+        List<Observable<Integer>> observables = aa.to(new Func1<Observable<Integer>, List<Observable<Integer>>>() {
+            @Override
+            public List<Observable<Integer>> call(Observable<Integer> integerObservable) {
+                List<Observable<Integer>> observableLIst = new ArrayList<Observable<Integer>>();
+                observableLIst.add(integerObservable);
+                return observableLIst;
+            }
+        });
+
+        Observable.merge(aa, aaa)
+                .subscribe(PrintObserver.create());
 
         Thread.sleep(1000);
     }
