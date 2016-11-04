@@ -13,6 +13,9 @@ import rx.subjects.PublishSubject;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -235,20 +238,6 @@ public class Main {
                 })
                 .subscribe(PrintObserver.create());
 
-        Observable
-                .create(new Observable.OnSubscribe<String>() {
-                    @Override
-                    public void call(Subscriber<? super String> subscriber) {
-//                        subscriber.onNext("");
-//                        subscriber.onCompleted();
-                        subscriber.onError(new Exception());
-                    }
-                })
-                .doOnTerminate(() -> System.out.println("doOnTerminate"))
-                .subscribe(s1 -> {
-                }, throwable -> {
-                });
-
         Variable<String> stringVariable = new Variable<>("test");
 
         Subscription subscription = stringVariable.asObservable().subscribe(PrintObserver.create());
@@ -317,11 +306,6 @@ public class Main {
                 .subscribeOn(Schedulers.newThread())
                 .subscribe(PrintObserver.create("combineLatest"));
 
-//        List<Observable<String>> aaaa = Observable
-//                .zip(a, b, (integer, integer2) -> {
-//                    return "" + integer + integer2;
-//                }).toList().toBlocking()
-
         Observable<Integer> aa = a.filter(integer -> {
             System.out.println("aa : " + integer);
             return integer % 2 == 0;
@@ -335,7 +319,85 @@ public class Main {
         Observable.merge(aa, aaa)
                 .subscribe(PrintObserver.create("merge"));
 
+        Thread.sleep(5000);
+
+//        start();
+        start2();
+
         Thread.sleep(3000);
+    }
+
+    static void start() {
+        // 直列実行になるonNextが1 - 2 - 3...となる
+        Observable.concat(
+                Observable.range(1, 5)
+                        .map(x -> fatTask(x)))
+                .subscribe(x -> System.out.println("start onNext : " + x));
+    }
+
+    static void start2() {
+//        Observable.concat(
+//                Observable.range(1, 5)
+//                        .map(x -> fatTask(x)))
+//                .concatWith(fatTask2(1)) // 1-5まで実行されてから、fatTask2(1)が実行される
+//                .subscribe(x -> System.out.println("start2 onNext : " + x));
+
+        // onNextは順番になるが、fatTaskとfatTask2は実行される
+//        Observable.concat(
+//                Observable.range(1, 5)
+//                        .map(x -> fatTask(x)))
+//                .flatMap(integer -> fatTask2(integer))
+//                .subscribe(x -> System.out.println("start2 onNext : " + x));
+
+        // こうすればすべて直列実行になる
+//        fatTask(1) : start.
+//        fatTask2(1) : start.
+//        start2 onNext : 1
+//        fatTask(2) : start.
+//        fatTask2(2) : start.
+//        start2 onNext : 2
+//        fatTask(3) : start.
+//        fatTask2(3) : start.
+//        start2 onNext : 3
+//        fatTask(4) : start.
+//        fatTask2(4) : start.
+//        start2 onNext : 4
+//        fatTask(5) : start.
+//        fatTask2(5) : start.
+//        start2 onNext : 5
+        Observable.concat(
+                Observable.range(1, 5)
+                        .map(x -> fatTask(x)
+                                .flatMap(integer -> fatTask2(integer))))
+                .subscribe(x -> System.out.println("start2 onNext : " + x));
+    }
+
+    private static final Random rand = new Random();
+    private static final ScheduledExecutorService executor = Executors.newScheduledThreadPool(5);
+
+    // ランダムにスリープした後 x を onNext する
+    private static Observable<Integer> fatTask(final int x) {
+        return Observable.create(subscriber -> {
+            long sleep = (long) (rand.nextDouble() * 1000L);
+            System.out.println("fatTask(" + x + ") : start.");
+
+            executor.schedule(() -> {
+                subscriber.onNext(x);
+                subscriber.onCompleted();
+            }, sleep, TimeUnit.MILLISECONDS);
+        });
+    }
+
+    private static Observable<Integer> fatTask2(final int x) {
+        return Observable.create(subscriber -> {
+            long sleep = (long) (rand.nextDouble() * 1000L);
+            System.out.println("fatTask2(" + x + ") : start.");
+
+            executor.schedule(() -> {
+                subscriber.onNext(x);
+                subscriber.onCompleted();
+            }, sleep, TimeUnit.MILLISECONDS);
+        });
     }
 
     public static Observable<Integer> get(Integer integer) {

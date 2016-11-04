@@ -3,6 +3,7 @@ package rx.playground;
 import rx.Notification;
 import rx.Observable;
 import rx.Observer;
+import rx.Subscriber;
 import rx.functions.Action1;
 
 /**
@@ -41,6 +42,15 @@ public class Do {
                     }
                 })
                 .subscribe(PrintObserver.create());
+
+        Observable
+                .create((Observable.OnSubscribe<String>) subscriber -> {
+//                        subscriber.onNext("");
+//                        subscriber.onCompleted();
+                    subscriber.onError(new Exception());
+                })
+                .doOnTerminate(() -> System.out.println("doOnTerminate"))
+                .subscribe(PrintObserver.create("doOnTerminate"));
 
         Observable.range(0, 3)
                 .map(integer -> integer / 0)

@@ -7,6 +7,8 @@
 * [分かった気になるはじめてのRxJava by きりみん](https://speakerdeck.com/kirimin/fen-katutaqi-ninaruhazimetefalserxjava)
 * [RxJavaについて調べた試した](http://kirimin.hatenablog.com/entry/20141012/1413126770)
 * [RxJava学習のベストプラクティスっぽいもの by yagi](https://speakerdeck.com/sys1yagi/rxjavaxue-xi-falsehesutohurakuteisutuhoimofalse)
+* [非同期や並列処理にも役立つRxJavaの使い方](http://qiita.com/disc99/items/1b2e44a1105008ec3ac9)
+* [明日から使えるRxjava頻出パターン DroidKaigi 2016](http://www.slideshare.net/KazukiYoshida/droidkaigi-rxjava)
 
 ### エラーハンドリング
 
@@ -21,8 +23,10 @@
 
 * [Rxで知っておくと便利なSubjectたち](http://qiita.com/hide92795/items/f7205c8171826cc2153b)
 
+
 ## その他
 
-どうやってObservable化するか
-Observableをどうやって操作するか
-Schedulerの設定をどうするのか
+* [RxJava で Observable の並列処理を直列化する](http://qiita.com/amay077/items/e95b30bfab2f75741edd)
+* どうやってObservable化するか
+* Observableをどうやって操作するか
+* Schedulerの設定をどうするのか
