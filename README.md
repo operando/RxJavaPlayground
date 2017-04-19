@@ -30,3 +30,11 @@
 * どうやってObservable化するか
 * Observableをどうやって操作するか
 * Schedulerの設定をどうするのか
+
+
+## RxJava 2.x
+
+* [What's different in 2.0](https://github.com/ReactiveX/RxJava/wiki/What%27s-different-in-2.0)
+* io.reactivex
+* BehaviorSubjectでnullとか渡してるところ変えないとだめ
+ * NullPointerException = nullを流せなくなってる
