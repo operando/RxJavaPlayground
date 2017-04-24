@@ -336,7 +336,7 @@ public class RxJava1Main {
                 .subscribe(x -> System.out.println("start onNext : " + x));
     }
 
-    static void start2() {
+    static void start2() throws InterruptedException {
 //        Observable.concat(
 //                Observable.range(1, 5)
 //                        .map(x -> fatTask(x)))
@@ -371,6 +371,21 @@ public class RxJava1Main {
                         .map(x -> fatTask(x)
                                 .flatMap(integer -> fatTask2(integer))))
                 .subscribe(x -> System.out.println("start2 onNext : " + x));
+
+        Subscription subscription = Observable
+                .create(emitter -> {
+                    emitter.onNext("hogehoge");
+                    emitter.onCompleted();
+                })
+                .subscribeOn(Schedulers.io())
+                .doOnNext(o -> System.out.println("be delay doOnNext : " + o))
+                .delay(1, TimeUnit.SECONDS)
+                .doOnNext(o -> System.out.println("delay doOnNext : " + o))
+                .subscribe(PrintObserver.create());
+
+        subscription.unsubscribe();
+
+        Thread.sleep(3000L);
     }
 
     private static final Random rand = new Random();
